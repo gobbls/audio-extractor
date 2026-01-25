@@ -1,0 +1,3 @@
+class mp3:
+    def __init__(self) -> None:
+        ...

@@ -1,0 +1,3 @@
+class m4a:
+    def __init__(self) -> None:
+        ...
