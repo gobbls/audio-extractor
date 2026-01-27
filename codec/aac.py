@@ -2,7 +2,8 @@ import subprocess
 from pathlib import Path
 
 
-class opus:
+# same as m4a, but m4a containerizes aac
+class aac:
     def __init__(self, temp_audio_path: Path, image_path: Path, output: str) -> None:
         self.audio_path = temp_audio_path
         self.image_path = image_path
@@ -18,14 +19,10 @@ class opus:
             '-map',
             '0:a',
             '-map',
-            '1:0',
-            '-c:a',
+            '1:v',
+            '-c',
             'copy',
-            '-c:v:0',
-            'libtheora',
-            '-q:v:0',
-            '10',
-            '-disposition:v:0',
+            '-disposition:v',
             'attached_pic',
             self.output,
         ]
