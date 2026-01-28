@@ -12,8 +12,10 @@ from . import constants as c
 
 
 class File(m4a, mp3, opus, aac):
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, queue_number: int, queue_length: int) -> None:
         self.video_path: Path = path
+        self.queue_number: int = queue_number
+        self.queue_length: int = queue_length
 
         self.video_md5_checksum: str = None
         self.video_md5_checksum_short: str = None
@@ -25,7 +27,7 @@ class File(m4a, mp3, opus, aac):
         # Preconfigured in main
         self._logger = logging.getLogger(__name__)
 
-        self._logger.info(f' Working with path: "{path}"...')
+        self._logger.info(f' [{self.queue_number} / {self.queue_length}] Working with path: "{path}"...')
 
         self._set_video_md5_checksum()
         self._set_audio_codec()

@@ -3,8 +3,8 @@
 
 #
 # TO DO:
-# 1. Keep track of the number of files being processed AND the filesize.
-#    - Add a "queue number" and "file size" property to the instance.
+# 1. Keep track of the --number of files-- being processed AND the filesize.
+#    - Add a --"queue number"-- and "file size" property to the instance.
 #
 # 2. Add Queing (?) to process multiple files in parallel.
 #
@@ -29,6 +29,10 @@
 #    - CPU was idle.
 #    - Was at the "Applying image" step of the process.
 #
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# 2. TWO AUDIO FILES MISSING, WHAT HAPPENED??
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
 
 
 import os
@@ -45,7 +49,7 @@ from codec import constants as c
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-separator = '_' * (os.get_terminal_size().columns - 1)
+separator = '~' * (os.get_terminal_size().columns - 1)
 separator_half = '~' * (os.get_terminal_size().columns // 2)
 
 
@@ -91,9 +95,10 @@ def main():
     paths: [Path] = []
     for target in target_paths:
         paths.extend(get_videos_from_path(target))
-    files: [File] = [File(f) for f in paths]
+    files: [File] = [File(path, index, len(paths)) for path, index in paths]
 
-    logger.info(' Initialized File object for every target files')
+    logger.info(f' {len(paths)} files found')
+    logger.info(f' {len(files)} File objects initialized')
 
     for file in files:
         print(separator)
