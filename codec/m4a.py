@@ -1,20 +1,17 @@
-import subprocess
 from pathlib import Path
 
 
-class m4a:
-    def __init__(self, temp_audio_path: Path, image_path: Path, output: str) -> None:
-        self.audio_path = temp_audio_path
-        self.image_path = image_path
-        self.output = output
+OUTPUT_EXTENSION = '.m4a'
 
-    def apply_cover_image(self) -> None:
-        command = [
+
+class m4a:
+    def __init__(self, temp_audio_path: Path, image_path: Path, output_name_wo_extension: Path) -> None:
+        self.command: [str] = [
             'ffmpeg',
             '-i',
-            self.audio_path,
+            temp_audio_path,
             '-i',
-            self.image_path,
+            image_path,
             '-map',
             '0:a',
             '-map',
@@ -23,10 +20,5 @@ class m4a:
             'copy',
             '-disposition:v',
             'attached_pic',
-            self.output,
+            str(output_name_wo_extension) + OUTPUT_EXTENSION
         ]
-
-        try:
-            subprocess.run(command, capture_output=True, text=True, check=True)
-        except subprocess.CalledProcessError as e:
-            raise ValueError(f'[ERROR] Failed to convert to {self.output}!\n\tGot error: {e.stderr}')
