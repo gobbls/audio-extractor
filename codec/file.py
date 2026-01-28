@@ -51,11 +51,12 @@ class File(m4a, mp3, opus, aac):
             with open(self.video_path, 'rb') as f:
                 for block in iter(lambda: f.read(block_s), b''):
                     md5.update(block)
-            hash: str = md5.hexdigest()
-            self.video_md5_checksum = hash
-            self.video_md5_checksum_short = hash[:5]
         except IOError as e:
             raise Exception(f'"{self.video_path}" Failed to create checksum! Got error:\n{e}')
+
+        hash: str = md5.hexdigest()
+        self.video_md5_checksum = hash
+        self.video_md5_checksum_short = hash[:5]
 
 
     def _set_audio_codec(self) -> None:
@@ -153,11 +154,12 @@ class File(m4a, mp3, opus, aac):
 
         try:
             subprocess.run(command, capture_output=True, text=True, check=True)
-            self._logger.info(f' Audio extracted to: "{self.audio_temp_path}"')
         except subprocess.CalledProcessError as e:
             raise Exception(f'Failed to extract audio: "{self.audio_temp_path}"! Got error:\n{e.stderr}')
         except:
             raise Exception(f'"{self.video_path}" Something else went wrong!')
+
+        self._logger.info(f' Audio extracted to: "{self.audio_temp_path}"')
 
 
     def create_temp_cover_image(self) -> None:
@@ -178,11 +180,12 @@ class File(m4a, mp3, opus, aac):
 
         try:
             subprocess.run(command, capture_output=True, text=True, check=True)
-            self._logger.info(f' Cover image generated at: "{self.image_path}"')
         except subprocess.CalledProcessError as e:
             raise Exception(f'Failed to generate cover image: "{self.image_path}"! Got error:\n{e.stderr}')
         except:
             raise Exception(f'"{self.video_path}" Something else went wrong!')
+
+        self._logger.info(f' Cover image generated at: "{self.image_path}"')
 
 
     def apply_cover_image(self) -> None:
