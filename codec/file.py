@@ -1,13 +1,14 @@
-from . import constants as c
+import json
+import logging
+import hashlib
+import subprocess
+from pathlib import Path
+
 from .m4a import m4a
+from .aac import aac
 from .mp3 import mp3
 from .opus import opus
-from .aac import aac
-
-import subprocess
-import json
-import hashlib
-from pathlib import Path
+from . import constants as c
 
 
 class File(m4a, mp3, opus, aac):
@@ -17,38 +18,49 @@ class File(m4a, mp3, opus, aac):
         self.video_md5_checksum: str = None
         self.video_md5_checksum_short: str = None
         self.audio_temp_path: Path = None
-        self.audio_path: Path = None
+        self.audio_path_wo_extension: Path = None
         self.audio_codec: str = None
         self.image_path: Path = None
+
+        # Preconfigured in main
+        self._logger = logging.getLogger(__name__)
+
+        self._logger.info(f' Working with path: "{path}"...')
 
         self._set_video_md5_checksum()
         self._set_audio_codec()
         self._set_temp_audio_path()
-        self._set_audio_path()
+        self._set_audio_path_wo_extension()
         self._set_image_path()
 
 
     def __del__(self) -> None:
+        self._logger.info(' Deleting instance...')
+
         self._remove_temp_audio()
         self._remove_image()
 
 
     def _set_video_md5_checksum(self) -> None:
+        self._logger.info(' Setting md5 checksum...')
+
         md5: any = hashlib.md5()
         block_s: int = 65536
 
         try:
             with open(self.video_path, 'rb') as f:
-                for block in iter(lambda: f.read(block_s), b""):
+                for block in iter(lambda: f.read(block_s), b''):
                     md5.update(block)
             hash: str = md5.hexdigest()
             self.video_md5_checksum = hash
             self.video_md5_checksum_short = hash[:5]
         except IOError as e:
-            raise ValueError(f'[ERROR] @ [{self.video_path}] Failed to create checksum\n\tGot error: {e}')
+            raise Exception(f'"{self.video_path}" Failed to create checksum! Got error:\n{e}')
 
 
     def _set_audio_codec(self) -> None:
+        self._logger.info(' Setting audio codec...')
+
         command: [str] = [
             'ffprobe',
             '-show_format',
@@ -69,53 +81,66 @@ class File(m4a, mp3, opus, aac):
                     self.audio_codec = stream.get('codec_name')
 
         except subprocess.CalledProcessError as e:
-            raise ValueError(f'[ERROR] @ [{self.video_path}] Failure running ffprobe\n\tGot error: {e.stderr}!')
+            raise Exception(f'"{self.video_path}" Failure running ffprobe! Got error:\n{e.stderr}!')
         except json.JSONDecodeError:
-            raise ValueError(f'[ERROR] @ [{self.video_path}] Failure decoding JSON from ffprobe output!')
+            raise Exception(f'"{self.video_path}" Failure decoding JSON from ffprobe output!')
         except:
-            raise ValueError(f'[ERROR] @ [{self.video_path}] Something else went wrong!')
+            raise Exception(f'"{self.video_path}" Something else went wrong!')
 
 
     def _set_temp_audio_path(self) -> None:
-        name: str = self.video_md5_checksum_short + "_" + self.video_path.stem + "." + self.audio_codec
+        self._logger.info(' Setting temp audio path...')
+
+        name: str = '.__' + self.video_md5_checksum_short + '_' + self.video_path.stem + '.' + self.audio_codec
         self.audio_temp_path = self.video_path.parent / name
 
-    def _set_audio_path(self) -> None:
-        name: str = self.video_path.stem + "." + self.audio_codec
-        self.audio_temp_path = self.video_path.parent / name
+
+    def _set_audio_path_wo_extension(self) -> None:
+        self._logger.info(' Setting audio path...')
+
+        name: str = self.video_path.stem
+        self.audio_path_wo_extension = self.video_path.parent / name
 
 
     def _set_image_path(self) -> None:
-        self.image_path: Path = self.video_path.parent / f"{self.video_md5_checksum_short}_{c.COVER_ART_NAME}"
+        self._logger.info(' Setting image path...')
+
+        self.image_path: Path = self.video_path.parent / f'{self.video_md5_checksum_short}_{c.COVER_ART_NAME}'
 
 
     def _remove_image(self) -> None:
+        self._logger.info(' Removing image...')
+
         if self.image_path.exists():
             self.image_path.unlink()
 
             if not self.image_path.exists():
-                print(f'[LOG] Cover image removed: {self.image_path}')
+                self._logger.info(f' Cover image removed: "{self.image_path}"')
             else:
-                raise ValueError(f'[ERROR] File {self.image_path} was generated, but was not able to be deleted!')
+                raise FileExistsError(f'File "{self.image_path}" was generated, but was not able to be deleted!')
 
         else:
-            print(f'[WARNING] @ [{self.image_path}] Cover image does not exsist, and couldn\'t be deleted!')
+            self._logger.warn(f' "{self.image_path}" Cover image does not exsist, and couldn\'t be deleted!')
 
 
     def _remove_temp_audio(self) -> None:
+        self._logger.info(' Removing temp audio...')
+
         if self.audio_temp_path.exists():
             self.audio_temp_path.unlink()
 
             if not self.audio_temp_path.exists():
-                print(f'[LOG] Cover image removed: {self.audio_temp_path}')
+                self._logger.info(f' Temp audio removed: "{self.audio_temp_path}"')
             else:
-                raise ValueError(f'[ERROR] File {self.audio_temp_path} was generated, but was not able to be deleted!')
+                raise FileExistsError(f'File "{self.audio_temp_path}" was generated, but was not able to be deleted!')
 
         else:
-            print(f'[WARNING] @ [{self.audio_temp_path}] Cover image does not exsist, and couldn\'t be deleted!')
+            self._logger.warn(f' "{self.audio_temp_path}" Temp audio does not exsist, and couldn\'t be deleted!')
 
 
     def extract_temp_audio(self) -> None:
+        self._logger.info(' Extracting audio...')
+
         command: [str] = [
             'ffmpeg',
             '-i',
@@ -128,14 +153,16 @@ class File(m4a, mp3, opus, aac):
 
         try:
             subprocess.run(command, capture_output=True, text=True, check=True)
-            print(f'[LOG] Audio extracted to: {self.audio_temp_path}')
+            self._logger.info(f' Audio extracted to: "{self.audio_temp_path}"')
         except subprocess.CalledProcessError as e:
-            raise ValueError(f'[ERROR] Failed to extract audio: {self.audio_temp_path}!\n\tGot error: {e.stderr}')
+            raise Exception(f'Failed to extract audio: "{self.audio_temp_path}"! Got error:\n{e.stderr}')
         except:
-            raise ValueError(f'[ERROR] @ [{self.video_path}] Something else went wrong!')
+            raise Exception(f'"{self.video_path}" Something else went wrong!')
 
 
     def create_temp_cover_image(self) -> None:
+        self._logger.info(' Creating image...')
+
         command: [str] = [
             'ffmpeg',
             '-loglevel',
@@ -151,21 +178,32 @@ class File(m4a, mp3, opus, aac):
 
         try:
             subprocess.run(command, capture_output=True, text=True, check=True)
-            print(f'[LOG] Cover image generated at: {self.image_path}')
+            self._logger.info(f' Cover image generated at: "{self.image_path}"')
         except subprocess.CalledProcessError as e:
-            raise ValueError(f'[ERROR] Failed to generate cover image: {self.image_path}!\n\tGot error: {e.stderr}')
+            raise Exception(f'Failed to generate cover image: "{self.image_path}"! Got error:\n{e.stderr}')
         except:
-            raise ValueError(f'[ERROR] @ [{self.video_path}] Something else went wrong!')
+            raise Exception(f'"{self.video_path}" Something else went wrong!')
 
 
-    def apply_conver_art(self) -> None:
-        if self.audio_codec in globals():
-            dynamic_codec = globals()[self.audio_codec]
-            codec_instance = dynamic_codec(
-                temp_audio_path=self.audio_temp_path,
-                image_path=self.image_path,
-                output=self.audio_path
-            )
-            codec_instance.apply_cover_image()
-        else:
-            raise ValueError(f"[ERROR] @ [{self.video_path}] has a undefined codec '{self.audio_codec}'!")
+    def apply_cover_image(self) -> None:
+        self._logger.info(' Applying image to audio file...')
+
+        # Raise exception if a codec ic NOT defined
+        if self.audio_codec not in globals():
+            raise NotImplementedError(f'"{self.video_path}" has a undefined codec "{self.audio_codec}"!')
+
+        dynamic_codec = globals()[self.audio_codec]
+        codec_instance = dynamic_codec(
+            temp_audio_path=self.audio_temp_path,
+            image_path=self.image_path,
+            output_name_wo_extension=self.audio_path_wo_extension,
+        )
+
+        try:
+            subprocess.run(codec_instance.command, capture_output=True, text=True, check=True)
+        except subprocess.CalledProcessError as e:
+            raise Exception(f'Failed to generate cover image: "{self.image_path}"! Got error:\n{e.stderr}')
+        except:
+            raise Exception(f'"{self.video_path}" Something else went wrong!')
+
+        self._logger.info(' Cover image applied')
