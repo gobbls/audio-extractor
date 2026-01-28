@@ -34,6 +34,10 @@ def check_dependencies() -> None:
 
 
 def check_targets() -> None:
+    #check if there are more than 0 targets
+    if len(target_paths) == 0:
+        raise FileNotFoundError('One or more target directories required!')
+
     # Check if the given target(s) exists
     for path in target_paths:
         if not os.path.exists(path):
