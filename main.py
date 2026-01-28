@@ -3,6 +3,7 @@
 
 #
 # TO DO:
+#
 # 1. Keep track of the --number of files-- being processed AND the filesize.
 #    - Add a --"queue number"-- and "file size" property to the instance.
 #
@@ -24,14 +25,15 @@
 #    d. Keep all temp-files created during processing (-k | --keep-all)
 #    e. Specify a directory for the temp files during processing (-t | --temp-at)
 #
+# 6. Do "collision" check before processing.
+#    - Same shortened checksum
+#    - Same final output name (different video format, maybe same audio codec?)
+#
 # TO FIX:
+#
 # 1. Had to press "Enter" on the last two big files for the program to complete. Why?
 #    - CPU was idle.
 #    - Was at the "Applying image" step of the process.
-#
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# 2. TWO AUDIO FILES MISSING, WHAT HAPPENED??
-# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 #
 
 
