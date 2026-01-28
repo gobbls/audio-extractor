@@ -16,7 +16,7 @@ class File(m4a, mp3, opus, aac):
 
         self.video_md5_checksum: str = None
         self.video_md5_checksum_short: str = None
-        self.temp_audio_path: Path = None
+        self.audio_temp_path: Path = None
         self.audio_path: Path = None
         self.audio_codec: str = None
         self.image_path: Path = None
@@ -78,11 +78,11 @@ class File(m4a, mp3, opus, aac):
 
     def _set_temp_audio_path(self) -> None:
         name: str = self.video_md5_checksum_short + "_" + self.video_path.stem + "." + self.audio_codec
-        self.temp_audio_path = self.video_path.parent / name
+        self.audio_temp_path = self.video_path.parent / name
 
     def _set_audio_path(self) -> None:
         name: str = self.video_path.stem + "." + self.audio_codec
-        self.temp_audio_path = self.video_path.parent / name
+        self.audio_temp_path = self.video_path.parent / name
 
 
     def _set_image_path(self) -> None:
@@ -103,16 +103,16 @@ class File(m4a, mp3, opus, aac):
 
 
     def _remove_temp_audio(self) -> None:
-        if self.temp_audio_path.exists():
-            self.temp_audio_path.unlink()
+        if self.audio_temp_path.exists():
+            self.audio_temp_path.unlink()
 
-            if not self.temp_audio_path.exists():
-                print(f'[LOG] Cover image removed: {self.temp_audio_path}')
+            if not self.audio_temp_path.exists():
+                print(f'[LOG] Cover image removed: {self.audio_temp_path}')
             else:
-                raise ValueError(f'[ERROR] File {self.temp_audio_path} was generated, but was not able to be deleted!')
+                raise ValueError(f'[ERROR] File {self.audio_temp_path} was generated, but was not able to be deleted!')
 
         else:
-            print(f'[WARNING] @ [{self.temp_audio_path}] Cover image does not exsist, and couldn\'t be deleted!')
+            print(f'[WARNING] @ [{self.audio_temp_path}] Cover image does not exsist, and couldn\'t be deleted!')
 
 
     def extract_temp_audio(self) -> None:
@@ -123,14 +123,14 @@ class File(m4a, mp3, opus, aac):
             '-vn',
             '-acodec',
             'copy',
-            self.temp_audio_path,
+            self.audio_temp_path,
         ]
 
         try:
             subprocess.run(command, capture_output=True, text=True, check=True)
-            print(f'[LOG] Audio extracted to: {self.temp_audio_path}')
+            print(f'[LOG] Audio extracted to: {self.audio_temp_path}')
         except subprocess.CalledProcessError as e:
-            raise ValueError(f'[ERROR] Failed to extract audio: {self.temp_audio_path}!\n\tGot error: {e.stderr}')
+            raise ValueError(f'[ERROR] Failed to extract audio: {self.audio_temp_path}!\n\tGot error: {e.stderr}')
         except:
             raise ValueError(f'[ERROR] @ [{self.video_path}] Something else went wrong!')
 
@@ -162,7 +162,7 @@ class File(m4a, mp3, opus, aac):
         if self.audio_codec in globals():
             dynamic_codec = globals()[self.audio_codec]
             codec_instance = dynamic_codec(
-                temp_audio_path=self.temp_audio_path,
+                temp_audio_path=self.audio_temp_path,
                 image_path=self.image_path,
                 output=self.audio_path
             )
