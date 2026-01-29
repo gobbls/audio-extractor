@@ -17,20 +17,21 @@ class File(m4a, mp3, opus, aac):
         self.queue_number: int = queue_number
         self.queue_length: int = queue_length
 
-        self.video_md5_checksum: str = None
-        self.video_md5_checksum_short: str = None
-        self.audio_temp_path: Path = None
-        self.audio_path_wo_extension: Path = None
-        self.audio_codec: str = None
-        self.image_path: Path = None
+        self.video_md5_checksum: str | None = None
+        self.video_md5_checksum_short: str | None= None
+        self.audio_temp_path: Path | None = None
+        self.audio_path_wo_extension: Path | None = None
+        self.video_size_b: int | None = None
+        self.audio_codec: str | None = None
+        self.image_path: Path | None = None
 
         # Preconfigured in main
         self._logger = logging.getLogger(__name__)
 
-        self._logger.info(f' [{self.queue_number} / {self.queue_length}] Working with path: "{path}"...')
+        self._logger.info(f' [{self.queue_number}/{self.queue_length}] Working with path: "{path}"...')
 
         self._set_video_md5_checksum()
-        self._set_audio_codec()
+        self._set_audio_codec_and_video_size_b()
         self._set_temp_audio_path()
         self._set_audio_path_wo_extension()
         self._set_image_path()
@@ -61,8 +62,8 @@ class File(m4a, mp3, opus, aac):
         self.video_md5_checksum_short = hash[:5]
 
 
-    def _set_audio_codec(self) -> None:
-        self._logger.info(' Setting audio codec...')
+    def _set_audio_codec_and_video_size_b(self) -> None:
+        self._logger.info(' Setting audio codec and file size...')
 
         command: [str] = [
             'ffprobe',
@@ -79,6 +80,10 @@ class File(m4a, mp3, opus, aac):
             res: any = subprocess.run(command, capture_output=True, text=True, check=True)
             out: any = json.loads(res.stdout)
 
+            # Set the file size (bytes).
+            self.video_size_b = str(out.get('format').get('size'))
+
+            # Set the audio codec.
             for stream in out.get('streams', []):
                 if stream.get('codec_type') == 'audio':
                     self.audio_codec = stream.get('codec_name')
@@ -108,7 +113,7 @@ class File(m4a, mp3, opus, aac):
     def _set_image_path(self) -> None:
         self._logger.info(' Setting image path...')
 
-        self.image_path: Path = self.video_path.parent / f'{self.video_md5_checksum_short}_{c.COVER_ART_NAME}'
+        self.image_path: Path = self.video_path.parent / f'.__{self.video_md5_checksum_short}_{c.COVER_ART_NAME}'
 
 
     def _remove_image(self) -> None:
