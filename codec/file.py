@@ -45,7 +45,7 @@ class File(m4a, mp3, opus, aac):
 
 
     def _set_video_md5_checksum(self) -> None:
-        self._logger.info(' Setting md5 checksum...')
+        self._logger.info(' Creating md5 hash...')
 
         md5: any = hashlib.md5()
         block_s: int = 65536 # 65KB (4096 x 16)
@@ -63,7 +63,7 @@ class File(m4a, mp3, opus, aac):
                 for block in iter(lambda: f.read(block_s), b''):
                     md5.update(block)
         except IOError as e:
-            raise Exception(f'"{self.video_path}" Failed to create checksum! Got error:\n{e}')
+            raise Exception(f'"{self.video_path}" Failed to create hash! Got error:\n{e}')
 
         hash: str = md5.hexdigest()
         self.video_md5_checksum = hash
@@ -71,7 +71,7 @@ class File(m4a, mp3, opus, aac):
 
 
     def _set_audio_codec_and_video_size_b(self) -> None:
-        self._logger.info(' Setting audio codec and file size...')
+        self._logger.info(' Getting audio codec and file size...')
 
         command: [str] = [
             'ffprobe',
@@ -112,7 +112,7 @@ class File(m4a, mp3, opus, aac):
 
 
     def _set_audio_path_wo_extension(self) -> None:
-        self._logger.info(' Setting audio path...')
+        self._logger.info(' Setting final output path...')
 
         name: str = self.video_path.stem
         self.audio_path_wo_extension = self.video_path.parent / name
@@ -131,12 +131,12 @@ class File(m4a, mp3, opus, aac):
             self.image_path.unlink()
 
             if not self.image_path.exists():
-                self._logger.info(f' Cover image removed: "{self.image_path}"')
+                self._logger.info(f' Image removed: "{self.image_path}"')
             else:
                 raise FileExistsError(f'File "{self.image_path}" was generated, but was not able to be deleted!')
 
         else:
-            self._logger.warn(f' "{self.image_path}" Cover image does not exsist, and couldn\'t be deleted!')
+            self._logger.warn(f' "{self.image_path}" Image does not exsist, and couldn\'t be deleted!')
 
 
     def _remove_temp_audio(self) -> None:
@@ -178,7 +178,7 @@ class File(m4a, mp3, opus, aac):
 
 
     def create_temp_cover_image(self) -> None:
-        self._logger.info(' Creating image...')
+        self._logger.info(f' Extracting image from timestamp {c.THUMBNAIL_CAPTURE_TIMESTAMP}...')
 
         command: [str] = [
             'ffmpeg',
@@ -200,7 +200,7 @@ class File(m4a, mp3, opus, aac):
         except:
             raise Exception(f'"{self.video_path}" Something else went wrong!')
 
-        self._logger.info(f' Cover image generated at: "{self.image_path}"')
+        self._logger.info(f' Cover image extracted to: "{self.image_path}"')
 
 
     def apply_cover_image(self) -> None:
@@ -224,4 +224,4 @@ class File(m4a, mp3, opus, aac):
         except:
             raise Exception(f'"{self.video_path}" Something else went wrong!')
 
-        self._logger.info(' Cover image applied')
+        self._logger.info(' Image applied')

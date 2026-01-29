@@ -49,7 +49,7 @@ from codec import constants as c
 
 # Configure logger
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 
 separator = '~' * (os.get_terminal_size().columns - 1)
 separator_half = '~' * (os.get_terminal_size().columns // 2)
@@ -97,17 +97,21 @@ def main():
     paths: [Path] = []
     for target in target_paths:
         paths.extend(get_videos_from_path(target))
-    files: [File] = [File(path, index, len(paths)) for index, path in enumerate(paths, start=1)]
 
     logger.info(f' {len(paths)} files found')
+
+    files: [File] = [File(path, index, len(paths)) for index, path in enumerate(paths, start=1)]
+
     logger.info(f' {len(files)} File objects initialized')
 
     for file in files:
         print(separator)
-        print('[>] Video path:', file.video_path)
-        print('[>] Video audio codec:', file.audio_codec)
-        print('[>] video size (bytes):', file.video_size_b)
-        print('[>] Generated image path:', file.image_path)
+        print(f'    ({file.queue_number}/{len(paths)})')
+        print('[>] Video path:          ', file.video_path)
+        print('[>] Video audio codec:   ', file.audio_codec)
+        print('[>] Video size (bytes):  ', file.video_size_b)
+        print('[>] Video checksum:      ', file.video_md5_checksum)
+        print('[>] Extracted image path:', file.image_path)
         print(separator_half)
         file.extract_temp_audio()
         file.create_temp_cover_image()
