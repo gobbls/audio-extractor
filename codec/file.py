@@ -12,6 +12,9 @@ from . import constants as c
 
 
 class File(m4a, mp3, opus, aac):
+    # Collect all generated hashes to find duplicate files.
+    video_md5_hashes = []
+
     def __init__(self, path: Path, queue_number: int, queue_length: int) -> None:
         self.video_path: Path = path
         self.queue_number: int = queue_number
@@ -27,7 +30,7 @@ class File(m4a, mp3, opus, aac):
 
         self._ran_cleanup: bool = False
 
-        # Preconfigured in main
+        # Preconfigured in main.
         self._logger = logging.getLogger(__name__)
 
         self._logger.info(f' [{self.queue_number}/{self.queue_length}] Working with path: "{path}"...')
@@ -40,9 +43,9 @@ class File(m4a, mp3, opus, aac):
 
 
     def __del__(self) -> None:
-        self._logger.info(' Deleting instance...')
-
         if not self._ran_cleanup:
+            self._logger.info(' Deleting instance...')
+
             self._remove_temp_audio()
             self._remove_image()
 
@@ -54,6 +57,15 @@ class File(m4a, mp3, opus, aac):
         self._remove_image()
 
         self._ran_cleanup = True
+
+
+    def _check_duplicate_hash(self) -> bool:
+        self._logger.info(' Checking for a duplicate hash...')
+
+        if self.video_md5_checksum in self.video_md5_hashes:
+            self._logger.warn(' Duplicate hash found! Terminating...')
+
+            raise Exception(f'"{self.video_md5_checksum}" Has a duplicate that has already been processed!')
 
 
     def _set_video_md5_checksum(self) -> None:
@@ -79,7 +91,11 @@ class File(m4a, mp3, opus, aac):
 
         hash: str = md5.hexdigest()
         self.video_md5_checksum = hash
-        self.video_md5_checksum_short = hash[:5]
+        self.video_md5_checksum_short = hash[:9]
+
+        self._check_duplicate_hash()
+
+        self.video_md5_hashes.append(hash)
 
 
     def _set_audio_codec_and_video_size_b(self) -> None:
