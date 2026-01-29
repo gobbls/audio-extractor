@@ -48,7 +48,15 @@ class File(m4a, mp3, opus, aac):
         self._logger.info(' Setting md5 checksum...')
 
         md5: any = hashlib.md5()
-        block_s: int = 65536
+        block_s: int = 65536 # 65KB (4096 x 16)
+
+        # 
+        # Note:
+        #   Should be able to limit the amount of data gathered for the
+        #   hash, in order to get a fuzzy hash (not used for integrity here).
+        #   But need to figure out how large the header information is
+        #   in order to scan past it, so that the hash is unique.
+        #
 
         try:
             with open(self.video_path, 'rb') as f:
