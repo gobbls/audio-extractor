@@ -42,7 +42,7 @@ class File(m4a, mp3, opus, aac):
     def __del__(self) -> None:
         self._logger.info(' Deleting instance...')
 
-        if (not self._ran_cleanup):
+        if not self._ran_cleanup:
             self._remove_temp_audio()
             self._remove_image()
 
