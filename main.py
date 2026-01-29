@@ -116,6 +116,7 @@ def main():
         file.extract_temp_audio()
         file.create_temp_cover_image()
         file.apply_cover_image()
+        file.clean()
 
 
 if __name__ == '__main__':

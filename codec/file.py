@@ -25,6 +25,8 @@ class File(m4a, mp3, opus, aac):
         self.audio_codec: str | None = None
         self.image_path: Path | None = None
 
+        self._ran_cleanup: bool = False
+
         # Preconfigured in main
         self._logger = logging.getLogger(__name__)
 
@@ -40,8 +42,18 @@ class File(m4a, mp3, opus, aac):
     def __del__(self) -> None:
         self._logger.info(' Deleting instance...')
 
+        if (not self._ran_cleanup):
+            self._remove_temp_audio()
+            self._remove_image()
+
+
+    def clean(self) -> None:
+        self._logger.info(' Deleting instance (manual cleanup)...')
+
         self._remove_temp_audio()
         self._remove_image()
+
+        self._ran_cleanup = True
 
 
     def _set_video_md5_checksum(self) -> None:
@@ -178,7 +190,7 @@ class File(m4a, mp3, opus, aac):
 
 
     def create_temp_cover_image(self) -> None:
-        self._logger.info(f' Extracting image from timestamp {c.THUMBNAIL_CAPTURE_TIMESTAMP}...')
+        self._logger.info(f' Extracting image from timestamp: {c.THUMBNAIL_CAPTURE_TIMESTAMP}...')
 
         command: [str] = [
             'ffmpeg',
