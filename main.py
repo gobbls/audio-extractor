@@ -49,10 +49,10 @@ from codec import constants as c
 
 # Configure logger
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 separator = '~' * (os.get_terminal_size().columns - 1)
-separator_half = '~' * (os.get_terminal_size().columns // 2)
+separator_half = '~' * (os.get_terminal_size().columns // 3)
 
 
 target_paths = argv[1:]
@@ -66,7 +66,7 @@ def check_dependencies() -> None:
         logger.error(' Missing dependency "FFprobe"!')
         raise FileNotFoundError('FFprobe not found!')
 
-    logger.info(' Dependencies OK')
+    logger.debug(' Dependencies OK')
 
 
 def check_targets() -> None:
@@ -86,7 +86,7 @@ def check_targets() -> None:
             logger.error(f' Path "{path}" is not a directory!')
             raise NotADirectoryError('The given target(s) is not a directory!')
 
-    logger.info(' Target directories OK')
+    logger.debug(' Target directories OK')
 
 
 def get_videos_from_path(path: str) -> [Path]:
@@ -98,7 +98,7 @@ def main():
     for target in target_paths:
         paths.extend(get_videos_from_path(target))
 
-    logger.info(f' {len(paths)} files found')
+    logger.info(f' {len(paths)} files found, gathering metadata...')
 
     files: [File] = [File(path, index, len(paths)) for index, path in enumerate(paths, start=1)]
 
@@ -106,13 +106,13 @@ def main():
 
     for file in files:
         print(separator)
-        print(f'    ({file.queue_number}/{len(paths)})')
+        print('[>] Queue:               ', f'{file.queue_number}/{len(paths)}')
         print('[>] Video path:          ', file.video_path)
         print('[>] Video audio codec:   ', file.audio_codec)
         print('[>] Video size (bytes):  ', file.video_size_b)
         print('[>] Video checksum:      ', file.video_md5_checksum)
         print('[>] Extracted image path:', file.image_path)
-        print(separator_half)
+
         file.extract_temp_audio()
         file.create_temp_cover_image()
         file.apply_cover_image()
@@ -120,6 +120,8 @@ def main():
 
 
 if __name__ == '__main__':
-	check_dependencies()
-	check_targets()
-	main()
+    check_dependencies()
+    check_targets()
+    main()
+
+    print("\nDone!")

@@ -33,7 +33,7 @@ class File(m4a, mp3, opus, aac):
         # Preconfigured in main.
         self._logger = logging.getLogger(__name__)
 
-        self._logger.info(f' [{self.queue_number}/{self.queue_length}] Working with path: "{path}"...')
+        self._logger.debug(f' [{self.queue_number}/{self.queue_length}] Working with path: "{path}"...')
 
         self._set_video_md5_checksum()
         self._set_audio_codec_and_video_size_b()
@@ -44,14 +44,14 @@ class File(m4a, mp3, opus, aac):
 
     def __del__(self) -> None:
         if not self._ran_cleanup:
-            self._logger.info(' Deleting instance...')
+            self._logger.debug(' Deleting instance...')
 
             self._remove_temp_audio()
             self._remove_image()
 
 
     def clean(self) -> None:
-        self._logger.info(' Deleting instance (manual cleanup)...')
+        self._logger.debug(' Deleting instance (manual cleanup)...')
 
         self._remove_temp_audio()
         self._remove_image()
@@ -60,16 +60,16 @@ class File(m4a, mp3, opus, aac):
 
 
     def _check_duplicate_hash(self) -> bool:
-        self._logger.info(' Checking for a duplicate hash...')
+        self._logger.debug(' Checking for a duplicate hash...')
 
         if self.video_md5_checksum in self.video_md5_hashes:
-            self._logger.warn(' Duplicate hash found! Terminating...')
+            self._logger.debug(' Duplicate hash found! Terminating...')
 
             raise Exception(f'"{self.video_md5_checksum}" Has a duplicate that has already been processed!')
 
 
     def _set_video_md5_checksum(self) -> None:
-        self._logger.info(' Creating md5 hash...')
+        self._logger.debug(' Creating md5 hash...')
 
         md5: any = hashlib.md5()
         block_s: int = 65536 # 65KB (4096 x 16)
@@ -99,7 +99,7 @@ class File(m4a, mp3, opus, aac):
 
 
     def _set_audio_codec_and_video_size_b(self) -> None:
-        self._logger.info(' Getting audio codec and file size...')
+        self._logger.debug(' Getting audio codec and file size...')
 
         command: [str] = [
             'ffprobe',
@@ -133,33 +133,33 @@ class File(m4a, mp3, opus, aac):
 
 
     def _set_temp_audio_path(self) -> None:
-        self._logger.info(' Setting temp audio path...')
+        self._logger.debug(' Setting temp audio path...')
 
         name: str = '.__' + self.video_md5_checksum_short + '_' + self.video_path.stem + '.' + self.audio_codec
         self.audio_temp_path = self.video_path.parent / name
 
 
     def _set_audio_path_wo_extension(self) -> None:
-        self._logger.info(' Setting final output path...')
+        self._logger.debug(' Setting final output path...')
 
         name: str = self.video_path.stem
         self.audio_path_wo_extension = self.video_path.parent / name
 
 
     def _set_image_path(self) -> None:
-        self._logger.info(' Setting image path...')
+        self._logger.debug(' Setting image path...')
 
         self.image_path: Path = self.video_path.parent / f'.__{self.video_md5_checksum_short}_{c.COVER_ART_NAME}'
 
 
     def _remove_image(self) -> None:
-        self._logger.info(' Removing image...')
+        self._logger.debug(' Removing image...')
 
         if self.image_path.exists():
             self.image_path.unlink()
 
             if not self.image_path.exists():
-                self._logger.info(f' Image removed: "{self.image_path}"')
+                self._logger.debug(f' Image removed: "{self.image_path}"')
             else:
                 raise FileExistsError(f'File "{self.image_path}" was generated, but was not able to be deleted!')
 
@@ -168,13 +168,13 @@ class File(m4a, mp3, opus, aac):
 
 
     def _remove_temp_audio(self) -> None:
-        self._logger.info(' Removing temp audio...')
+        self._logger.debug(' Removing temp audio...')
 
         if self.audio_temp_path.exists():
             self.audio_temp_path.unlink()
 
             if not self.audio_temp_path.exists():
-                self._logger.info(f' Temp audio removed: "{self.audio_temp_path}"')
+                self._logger.debug(f' Temp audio removed: "{self.audio_temp_path}"')
             else:
                 raise FileExistsError(f'File "{self.audio_temp_path}" was generated, but was not able to be deleted!')
 
@@ -183,7 +183,7 @@ class File(m4a, mp3, opus, aac):
 
 
     def extract_temp_audio(self) -> None:
-        self._logger.info(' Extracting audio...')
+        self._logger.debug(' Extracting audio...')
 
         command: [str] = [
             'ffmpeg',
@@ -202,11 +202,11 @@ class File(m4a, mp3, opus, aac):
         except:
             raise Exception(f'"{self.video_path}" Something else went wrong!')
 
-        self._logger.info(f' Audio extracted to: "{self.audio_temp_path}"')
+        self._logger.debug(f' Audio extracted to: "{self.audio_temp_path}"')
 
 
     def create_temp_cover_image(self) -> None:
-        self._logger.info(f' Extracting image from timestamp: {c.THUMBNAIL_CAPTURE_TIMESTAMP}...')
+        self._logger.debug(f' Extracting image from timestamp: {c.THUMBNAIL_CAPTURE_TIMESTAMP}...')
 
         command: [str] = [
             'ffmpeg',
@@ -228,11 +228,11 @@ class File(m4a, mp3, opus, aac):
         except:
             raise Exception(f'"{self.video_path}" Something else went wrong!')
 
-        self._logger.info(f' Cover image extracted to: "{self.image_path}"')
+        self._logger.debug(f' Cover image extracted to: "{self.image_path}"')
 
 
     def apply_cover_image(self) -> None:
-        self._logger.info(' Applying image to audio file...')
+        self._logger.debug(' Applying image to audio file...')
 
         # Raise exception if a codec ic NOT defined
         if self.audio_codec not in globals():
@@ -252,4 +252,4 @@ class File(m4a, mp3, opus, aac):
         except:
             raise Exception(f'"{self.video_path}" Something else went wrong!')
 
-        self._logger.info(' Image applied')
+        self._logger.debug(' Image applied')
