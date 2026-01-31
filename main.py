@@ -4,9 +4,6 @@
 #
 # TO DO:
 #
-# 1. --Keep track of the number of files being processed AND the filesize.
-#    - Add a "queue number" and "file size" property to the instance.--
-#
 # 2. Add Queing (?) to process multiple files in parallel.
 #
 # 3. Get rid of the temp files when their operation is complete.
@@ -19,13 +16,13 @@
 #    (don't need the whole 2GB to create a checksum...)
 #
 # 5. Add arg options to:
-#    a. Recurse directories (-r | --recurse)
-#    b. Specify output directory (-o | --output [INPUT])
-#    c. Ability to delete the video files on completion (-D | --delete)
-#    d. Keep all temp-files created during processing (-k | --keep-all)
-#    e. Specify a directory for the temp files during processing (-t | --temp-at [INPUT])
-#    f. Get debug logger print-outs (--debug)
-#    g. Ability to "walk" given directories with named directories to add to targets (-w | --walk [INPUT])
+#    a. Recurse directories                                                          [ -r | --recurse ]
+#    b. Specify output directory                                                     [ -o | --output [INPUT] ]
+#    c. Ability to delete the video files on completion                              [ -D | --delete ]
+#    d. Keep all temp-files created during processing                                [ -k | --keep-all ]
+#    e. Specify a directory for the temp files during processing                     [ -t | --temp-at [INPUT] ]
+#    f. Get debug logger print-outs                                                  [ --debug ]
+#    g. Ability to "walk" given directories with named directories to add to targets [ -w | --walk [INPUT] ]
 #
 # 6. Do "collision" check before processing.
 #    - Same shortened checksum
@@ -37,6 +34,7 @@
 # 1. Had to press "Enter" on the last two big files for the program to complete. Why?
 #    - CPU was idle.
 #    - Was at the "Applying image" step of the process.
+#    - Figured it out, colliding names and FFMPEG waited for overwriting permission.
 #
 # 2. Final output audio files might have the same name, and wont overwrite
 #    the first one, so FFMPEG gets stuck waiting for overwriting permission input.
