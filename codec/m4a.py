@@ -6,6 +6,7 @@ OUTPUT_EXTENSION = '.m4a'
 
 class m4a:
     def __init__(self, temp_audio_path: Path, image_path: Path, output_name_wo_extension: Path) -> None:
+        self.output_path: str = str(output_name_wo_extension) + OUTPUT_EXTENSION
         self.command: [str] = [
             'ffmpeg',
             '-i',
@@ -20,5 +21,5 @@ class m4a:
             'copy',
             '-disposition:v',
             'attached_pic',
-            str(output_name_wo_extension) + OUTPUT_EXTENSION
+            self.output_path
         ]

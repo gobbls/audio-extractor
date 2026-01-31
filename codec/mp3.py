@@ -6,6 +6,7 @@ OUTPUT_EXTENSION = '.mp3'
 
 class mp3:
     def __init__(self, temp_audio_path: Path, image_path: Path, output_name_wo_extension: Path) -> None:
+        self.output_path: str = str(output_name_wo_extension) + OUTPUT_EXTENSION
         self.command: [str] = [
             'ffmpeg',
             '-i',
@@ -20,5 +21,5 @@ class mp3:
             'copy',
             '-id3v2_version',
             '3',
-            str(output_name_wo_extension) + OUTPUT_EXTENSION
+            self.output_path
         ]

@@ -13,7 +13,7 @@ from . import constants as c
 
 class File(m4a, mp3, opus, aac):
     # Collect all generated hashes to find duplicate files.
-    video_md5_hashes = []
+    video_md5_hashes: [str] = []
 
     #
     # Name-collisions makes FFMPEG wait for owerwriting permissions ("[N/y]"),
@@ -21,7 +21,7 @@ class File(m4a, mp3, opus, aac):
     # Collect the names of the final outputs in order to check for collisions
     # during the meta-data collection process.
     #
-    final_output_names = []
+    final_output_paths: [str] = []
 
     def __init__(self, path: Path, queue_number: int, queue_length: int) -> None:
         self.video_path: Path = path
@@ -35,6 +35,7 @@ class File(m4a, mp3, opus, aac):
         self.video_size_b: int | None = None
         self.audio_codec: str | None = None
         self.image_path: Path | None = None
+        self.audio_codec_instance: any = None
 
         self._ran_cleanup: bool = False
 
@@ -48,8 +49,10 @@ class File(m4a, mp3, opus, aac):
         self._set_temp_audio_path()
         self._set_audio_path_wo_extension()
         self._set_image_path()
+        self._set_audio_codec_instance()
 
 
+    # TODO: should just call the `clean()` here.
     def __del__(self) -> None:
         if not self._ran_cleanup:
             self._logger.debug(' Deleting instance...')
@@ -160,6 +163,36 @@ class File(m4a, mp3, opus, aac):
         self.image_path: Path = self.video_path.parent / f'.__{self.video_md5_checksum_short}_{c.COVER_ART_NAME}'
 
 
+    def _check_duplicate_final_name(self) -> bool:
+        self._logger.debug(' Checking for a duplicate final output name...')
+
+        if self.audio_codec_instance.output_path in self.final_output_paths:
+            self._logger.debug(' Duplicate final output name found! Terminating...')
+
+            raise Exception(f'"{self.audio_codec_instance.output_path}" Has a duplicate that has already been processed!')
+
+
+    def _set_audio_codec_instance(self) -> None:
+        # Check if we have defined a command for the videos audio codec.
+        if self.audio_codec not in globals():
+            raise NotImplementedError(f'"{self.video_path}" has a undefined codec "{self.audio_codec}"!')
+
+        codec = globals()[self.audio_codec]
+        self.audio_codec_instance = codec(
+            temp_audio_path=self.audio_temp_path,
+            image_path=self.image_path,
+            output_name_wo_extension=self.audio_path_wo_extension,
+        )
+
+        #
+        # The codec instance stores the intended final path of the output,
+        # use that to check for duplicates before execution.
+        #
+        self._check_duplicate_final_name()
+
+        self.final_output_paths.append(self.audio_codec_instance.output_path)
+
+
     def _remove_image(self) -> None:
         self._logger.debug(' Removing image...')
 
@@ -242,19 +275,8 @@ class File(m4a, mp3, opus, aac):
     def apply_cover_image(self) -> None:
         self._logger.debug(' Applying image to audio file...')
 
-        # Raise exception if a codec ic NOT defined
-        if self.audio_codec not in globals():
-            raise NotImplementedError(f'"{self.video_path}" has a undefined codec "{self.audio_codec}"!')
-
-        dynamic_codec = globals()[self.audio_codec]
-        codec_instance = dynamic_codec(
-            temp_audio_path=self.audio_temp_path,
-            image_path=self.image_path,
-            output_name_wo_extension=self.audio_path_wo_extension,
-        )
-
         try:
-            subprocess.run(codec_instance.command, capture_output=True, text=True, check=True)
+            subprocess.run(self.audio_codec_instance.command, capture_output=True, text=True, check=True)
         except subprocess.CalledProcessError as e:
             raise Exception(f'Failed to generate cover image: "{self.image_path}"! Got error:\n{e.stderr}')
         except:
