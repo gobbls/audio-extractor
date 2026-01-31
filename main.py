@@ -6,15 +6,6 @@
 #
 # 2. Add Queing (?) to process multiple files in parallel.
 #
-# 3. Get rid of the temp files when their operation is complete.
-#    TL;DR: dispose of the instance once the operation is completed.
-#    (the instance lives in a array, and stays there until the program completes)
-#    - Perhaps just pop it's index from the array?
-#    - Can queues be used here?
-#
-# 4. Limit how much data is being read when creating the checksum.
-#    (don't need the whole 2GB to create a checksum...)
-#
 # 5. Add arg options to:
 #    a. Recurse directories                                                          [ -r | --recurse ]
 #    b. Specify output directory                                                     [ -o | --output [INPUT] ]
@@ -23,23 +14,6 @@
 #    e. Specify a directory for the temp files during processing                     [ -t | --temp-at [INPUT] ]
 #    f. Get debug logger print-outs                                                  [ --debug ]
 #    g. Ability to "walk" given directories with named directories to add to targets [ -w | --walk [INPUT] ]
-#
-# 6. Do "collision" check before processing.
-#    - Same shortened checksum
-#    - Same final output name (different video format, maybe same audio codec?)
-#
-#
-# TO FIX:
-#
-# 1. Had to press "Enter" on the last two big files for the program to complete. Why?
-#    - CPU was idle.
-#    - Was at the "Applying image" step of the process.
-#    - Figured it out, colliding names and FFMPEG waited for overwriting permission.
-#
-# 2. Final output audio files might have the same name, and wont overwrite
-#    the first one, so FFMPEG gets stuck waiting for overwriting permission input.
-#    - Fix by adding the short hash as a siffix before the extension.
-#      (suffix, in order to still be able to sort the files by name).
 #
 
 
@@ -55,7 +29,7 @@ import constants as c
 
 # Configure logger
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.DEBUG)
 separator = '~' * os.get_terminal_size().columns
 
 
