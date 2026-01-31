@@ -9,18 +9,32 @@ from codec.codec import Codec
 
 
 class File(Codec):
-    # Collect all generated hashes to find duplicate files.
     video_md5_hashes: [str] = []
-
-    #
-    # Name-collisions makes FFMPEG wait for owerwriting permissions ("[N/y]"),
-    # and pauses the program until we press "Enter" to continue.
-    # Collect the names of the final outputs in order to check for collisions
-    # during the meta-data collection process.
-    #
     final_output_paths: [str] = []
 
     def __init__(self, path: Path, queue_number: int, queue_length: int) -> None:
+        """
+        Inherits the Codec class which is used to evaluate which
+        codec to initialize based on the audio codec of the given file.
+
+        Args:
+            `path` (Path): ...
+            `queue_number` (int): ...
+            `queue_length` (int): ...
+
+        Attributes:
+            `video_path` (Path): ...
+            `queue_number` (int): ...
+            `queue_length` (int): ...
+            `video_md5_checksum` (str): ...
+            `video_md5_checksum_short` (str): ...
+            `audio_temp_path` (Path): ...
+            `audio_path_wo_extension` (Path): ...
+            `video_size_b` (int): ...
+            `audio_codec` (str): ...
+            `image_path` (Path): ...
+            `audio_codec_instance` (Codec): ...
+        """
         self.video_path: Path = path
         self.queue_number: int = queue_number
         self.queue_length: int = queue_length
@@ -34,9 +48,7 @@ class File(Codec):
         self.image_path: Path | None = None
         self.audio_codec_instance: Codec | None = None
 
-        # Preconfigured in main.
-        self._logger = logging.getLogger(__name__)
-
+        self._logger = logging.getLogger(__name__) # Preconfigured in main.
         self._logger.debug(f' [{self.queue_number}/{self.queue_length}] Working with path: "{path}"...')
 
         self._set_video_md5_checksum()
@@ -52,6 +64,9 @@ class File(Codec):
 
 
     def clean(self) -> None:
+        """
+        Remove the temporary assets the instance created.
+        """
         self._logger.debug(' Deleting instance...')
 
         self._remove_temp_audio()
@@ -59,6 +74,15 @@ class File(Codec):
 
 
     def _check_duplicate_hash(self) -> bool:
+        """
+        TL;DR: Rises an exception if a duplicate file exists in any given target.
+
+        Check if the video has a duplicate by matching the
+        generated checksum (an md5 hash) with already initialized instances.
+
+        This also accounts for duplicates in other given targest as well,
+        meaning; if a duplicate is found in another directory, the exception is risen.
+        """
         self._logger.debug(' Checking for a duplicate hash...')
 
         if self.video_md5_checksum in self.video_md5_hashes:
@@ -68,18 +92,14 @@ class File(Codec):
 
 
     def _set_video_md5_checksum(self) -> None:
+        """
+        Generates an md5 hash for the video this instance is initialized for
+        and sets the `video_md5_checksum` and `video_md5_checksum_short` properties.
+        """
         self._logger.debug(' Creating md5 hash...')
 
         md5: any = hashlib.md5()
         block_s: int = 65536 # 65KB (4096 x 16)
-
-        # 
-        # Note:
-        #   Should be able to limit the amount of data gathered for the
-        #   hash, in order to get a fuzzy hash (not used for integrity here).
-        #   But need to figure out how large the header information is
-        #   in order to scan past it, so that the hash is unique.
-        #
 
         try:
             with open(self.video_path, 'rb') as f:
@@ -98,6 +118,10 @@ class File(Codec):
 
 
     def _set_audio_codec_and_video_size_b(self) -> None:
+        """
+        Gets the audio codec from the video and sets it to the
+        `video_md5_checksum` and `video_md5_checksum_short` properties.
+        """
         self._logger.debug(' Getting audio codec and file size...')
 
         command: [str] = [
@@ -115,10 +139,8 @@ class File(Codec):
             res: any = subprocess.run(command, capture_output=True, text=True, check=True)
             out: any = json.loads(res.stdout)
 
-            # Set the file size (bytes).
             self.video_size_b = str(out.get('format').get('size'))
 
-            # Set the audio codec.
             for stream in out.get('streams', []):
                 if stream.get('codec_type') == 'audio':
                     self.audio_codec = stream.get('codec_name')

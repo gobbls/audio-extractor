@@ -4,8 +4,6 @@
 #
 # TO DO:
 #
-# 2. Add Queing (?) to process multiple files in parallel.
-#
 # 5. Add arg options to:
 #    a. Recurse directories                                                          [ -r | --recurse ]
 #    b. Specify output directory                                                     [ -o | --output [INPUT] ]
