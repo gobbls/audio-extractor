@@ -15,6 +15,14 @@ class File(m4a, mp3, opus, aac):
     # Collect all generated hashes to find duplicate files.
     video_md5_hashes = []
 
+    #
+    # Name-collisions makes FFMPEG wait for owerwriting permissions ("[N/y]"),
+    # and pauses the program until we press "Enter" to continue.
+    # Collect the names of the final outputs in order to check for collisions
+    # during the meta-data collection process.
+    #
+    final_output_names = []
+
     def __init__(self, path: Path, queue_number: int, queue_length: int) -> None:
         self.video_path: Path = path
         self.queue_number: int = queue_number

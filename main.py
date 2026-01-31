@@ -20,20 +20,28 @@
 #
 # 5. Add arg options to:
 #    a. Recurse directories (-r | --recurse)
-#    b. Specify output directory (-o | --output)
+#    b. Specify output directory (-o | --output [INPUT])
 #    c. Ability to delete the video files on completion (-D | --delete)
 #    d. Keep all temp-files created during processing (-k | --keep-all)
-#    e. Specify a directory for the temp files during processing (-t | --temp-at)
+#    e. Specify a directory for the temp files during processing (-t | --temp-at [INPUT])
+#    f. Get debug logger print-outs (--debug)
+#    g. Ability to "walk" given directories with named directories to add to targets (-w | --walk [INPUT])
 #
 # 6. Do "collision" check before processing.
 #    - Same shortened checksum
 #    - Same final output name (different video format, maybe same audio codec?)
+#
 #
 # TO FIX:
 #
 # 1. Had to press "Enter" on the last two big files for the program to complete. Why?
 #    - CPU was idle.
 #    - Was at the "Applying image" step of the process.
+#
+# 2. Final output audio files might have the same name, and wont overwrite
+#    the first one, so FFMPEG gets stuck waiting for overwriting permission input.
+#    - Fix by adding the short hash as a siffix before the extension.
+#      (suffix, in order to still be able to sort the files by name).
 #
 
 
@@ -50,9 +58,7 @@ from codec import constants as c
 # Configure logger
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-separator = '~' * (os.get_terminal_size().columns - 1)
-separator_half = '~' * (os.get_terminal_size().columns // 3)
+separator = '~' * os.get_terminal_size().columns
 
 
 target_paths = argv[1:]
