@@ -57,11 +57,8 @@ class File(m4a, mp3, opus, aac):
     def clean(self) -> None:
         self._logger.debug(' Deleting instance...')
 
-        if self.image_path:
-            self._remove_temp_audio()
-
-        if self.audio_temp_path:
-            self._remove_image()
+        self._remove_temp_audio()
+        self._remove_image()
 
 
     def _check_duplicate_hash(self) -> bool:
