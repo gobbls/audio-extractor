@@ -7,12 +7,16 @@ OUTPUT_EXTENSION = '.m4a' # same as m4a, but m4a containerizes aac
 class aac:
     def __init__(self, temp_audio_path: Path, image_path: Path, output_name_wo_extension: Path) -> None:
         self.output_path: str = str(output_name_wo_extension) + OUTPUT_EXTENSION
-        self.command: [str] = [
+        self.temp_audio_path: Path = temp_audio_path
+        self.image_path: Path = image_path
+
+    def get_command(self) -> [str]:
+        return [
             'ffmpeg',
             '-i',
-            temp_audio_path,
+            self.temp_audio_path,
             '-i',
-            image_path,
+            self.image_path,
             '-map',
             '0:a',
             '-map',

@@ -151,13 +151,20 @@ class File(Codec):
         self.image_path: Path = self.video_path.parent / f'.__{self.video_md5_checksum_short}_{c.COVER_ART_NAME}'
 
 
+    def _fix_codec_instance_output_path(self) -> None:
+        self._logger.debug(' Fixing final name by appending short checksum for uniqueness...')
+
+        path = Path(self.audio_codec_instance.output_path)
+        new_path = str(path.parent / (path.stem + "_" + self.video_md5_checksum_short + "_" + path.suffix))
+        self.audio_codec_instance.output_path = new_path
+
+
     def _check_duplicate_final_name(self) -> bool:
         self._logger.debug(' Checking for a duplicate final output name...')
 
-        if self.audio_codec_instance.output_path in self.final_output_paths:
-            self._logger.debug(' Duplicate final output name found! Terminating...')
-
-            raise Exception(f'"{self.audio_codec_instance.output_path}" Has a duplicate that has already been processed!')
+        while(self.audio_codec_instance.output_path in self.final_output_paths):
+            self._logger.debug(' Duplicate final output name found! Renaming...')
+            self._fix_codec_instance_output_path()
 
 
     def _set_audio_codec_instance(self) -> None:
@@ -258,7 +265,7 @@ class File(Codec):
         self._logger.debug(' Applying image to audio file...')
 
         try:
-            subprocess.run(self.audio_codec_instance.command, capture_output=True, text=True, check=True)
+            subprocess.run(self.audio_codec_instance.get_command(), capture_output=True, text=True, check=True)
         except subprocess.CalledProcessError as e:
             raise Exception(f'Failed to generate cover image: "{self.image_path}"! Got error:\n{e.stderr}')
         except:
