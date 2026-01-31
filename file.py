@@ -4,14 +4,11 @@ import hashlib
 import subprocess
 from pathlib import Path
 
-from .m4a import m4a
-from .aac import aac
-from .mp3 import mp3
-from .opus import opus
-from . import constants as c
+import constants as c
+from codec.codec import Codec
 
 
-class File(m4a, mp3, opus, aac):
+class File(Codec):
     # Collect all generated hashes to find duplicate files.
     video_md5_hashes: [str] = []
 
@@ -35,7 +32,7 @@ class File(m4a, mp3, opus, aac):
         self.video_size_b: int | None = None
         self.audio_codec: str | None = None
         self.image_path: Path | None = None
-        self.audio_codec_instance: any = None
+        self.audio_codec_instance: Codec | None = None
 
         # Preconfigured in main.
         self._logger = logging.getLogger(__name__)
@@ -164,21 +161,15 @@ class File(m4a, mp3, opus, aac):
 
 
     def _set_audio_codec_instance(self) -> None:
-        # Check if we have defined a command for the videos audio codec.
-        if self.audio_codec not in globals():
-            raise NotImplementedError(f'"{self.video_path}" has a undefined codec "{self.audio_codec}"!')
-
-        codec = globals()[self.audio_codec]
-        self.audio_codec_instance = codec(
-            temp_audio_path=self.audio_temp_path,
+        codec = Codec(
+            codec=self.audio_codec,
+            audio_temp_path=self.audio_temp_path,
             image_path=self.image_path,
             output_name_wo_extension=self.audio_path_wo_extension,
         )
 
-        #
-        # The codec instance stores the intended final path of the output,
-        # use that to check for duplicates before execution.
-        #
+        self.audio_codec_instance = codec.get()
+
         self._check_duplicate_final_name()
 
         self.final_output_paths.append(self.audio_codec_instance.output_path)

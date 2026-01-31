@@ -49,8 +49,8 @@ import subprocess
 from sys import argv
 from pathlib import Path
 
-from codec.file import File
-from codec import constants as c
+from file import File
+import constants as c
 
 
 # Configure logger
