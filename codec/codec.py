@@ -10,7 +10,7 @@ class Codec(m4a, aac, mp3, opus):
     def __init__(self, codec: str, audio_temp_path: Path, image_path: Path, output_name_wo_extension: Path) -> None:
 
         if codec not in globals():
-            raise NotImplementedError(f'Undefined codec "{codec}"!')
+            raise NotImplementedError(f'{audio_temp_path} Requires an undefined codec "{codec}"!')
 
         self.codec_class: str = globals()[codec]
         self.audio_temp_path: Path = audio_temp_path
