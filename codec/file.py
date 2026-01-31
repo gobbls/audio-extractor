@@ -37,8 +37,6 @@ class File(m4a, mp3, opus, aac):
         self.image_path: Path | None = None
         self.audio_codec_instance: any = None
 
-        self._ran_cleanup: bool = False
-
         # Preconfigured in main.
         self._logger = logging.getLogger(__name__)
 
@@ -52,22 +50,18 @@ class File(m4a, mp3, opus, aac):
         self._set_audio_codec_instance()
 
 
-    # TODO: should just call the `clean()` here.
     def __del__(self) -> None:
-        if not self._ran_cleanup:
-            self._logger.debug(' Deleting instance...')
-
-            self._remove_temp_audio()
-            self._remove_image()
+        self.clean()
 
 
     def clean(self) -> None:
-        self._logger.debug(' Deleting instance (manual cleanup)...')
+        self._logger.debug(' Deleting instance...')
 
-        self._remove_temp_audio()
-        self._remove_image()
+        if self.image_path:
+            self._remove_temp_audio()
 
-        self._ran_cleanup = True
+        if self.audio_temp_path:
+            self._remove_image()
 
 
     def _check_duplicate_hash(self) -> bool:
