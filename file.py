@@ -48,6 +48,8 @@ class File(Codec):
         self.image_path: Path | None = None
         self.audio_codec_instance: Codec | None = None
 
+        self._cleaned: bool = False
+
         self._logger = logging.getLogger(__name__) # Preconfigured in main.
         self._logger.debug(f' [{self.queue_number}/{self.queue_length}] Working with path: "{path}"...')
 
@@ -69,8 +71,9 @@ class File(Codec):
         """
         self._logger.debug(' Deleting instance...')
 
-        self._remove_temp_audio()
-        self._remove_image()
+        if not self._cleaned:
+            self._remove_temp_audio()
+            self._remove_image()
 
 
     def _check_duplicate_hash(self) -> bool:
