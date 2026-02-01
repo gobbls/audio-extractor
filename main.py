@@ -35,7 +35,12 @@ target_paths = argv[1:]
 
 
 def check_dependencies() -> None:
-    # Check that ffprobe is installed
+    """
+    Checks for the dependencies:
+        1. `FFProbe`
+
+    Rises an exception if not found.
+    """
     try:
         subprocess.run(['ffprobe', '-loglevel', 'quiet'])
     except FileNotFoundError:
@@ -46,6 +51,12 @@ def check_dependencies() -> None:
 
 
 def check_targets() -> None:
+    """
+    Check that the given targets follows the rules:
+        1. There are more than `0` targets.
+        2. That all the targets `exists`.
+        3. That all the targets are `directories`.
+    """
     #check if there are more than 0 targets
     if len(target_paths) == 0:
         raise FileNotFoundError('One or more target directories required!')
@@ -66,7 +77,14 @@ def check_targets() -> None:
 
 
 def get_videos_from_path(path: str) -> [Path]:
-	return [item for item in Path(path).iterdir() if item.is_file() and item.suffix in c.VIDEO_FORMATS]
+    """
+    Returns all files from a given path if the files suffix exists in
+    a list of supported formats.
+
+    Returns:
+        `[str]`: An array of file paths.
+    """
+    return [item for item in Path(path).iterdir() if item.is_file() and item.suffix in c.VIDEO_FORMATS]
 
 
 def main():

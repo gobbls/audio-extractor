@@ -14,26 +14,26 @@ class File(Codec):
 
     def __init__(self, path: Path, queue_number: int, queue_length: int) -> None:
         """
-        Inherits the Codec class which is used to evaluate which
-        codec to initialize based on the audio codec of the given file.
+        Inherits the Codec class wich is used to evaluate what
+        codec to initialize based on the audio codec of the given video file.
 
         Args:
-            `path` (Path): ...
-            `queue_number` (int): ...
-            `queue_length` (int): ...
+            `path` (Path): The path of the target video file.
+            `queue_number` (int): The queue number of the video file.
+            `queue_length` (int): How many other video files are in the queue.
 
         Attributes:
-            `video_path` (Path): ...
-            `queue_number` (int): ...
-            `queue_length` (int): ...
-            `video_md5_checksum` (str): ...
-            `video_md5_checksum_short` (str): ...
-            `audio_temp_path` (Path): ...
-            `audio_path_wo_extension` (Path): ...
-            `video_size_b` (int): ...
-            `audio_codec` (str): ...
-            `image_path` (Path): ...
-            `audio_codec_instance` (Codec): ...
+            `video_path` (Path): The path of the target video file.
+            `queue_number` (int): The queue number of the video file.
+            `queue_length` (int): How many other video files are in the queue.
+            `video_md5_checksum` (str): The checksum of the video file.
+            `video_md5_checksum_short` (str): The shortened version of the checksum.
+            `audio_temp_path` (Path): The path of the temporary extracted audio file.
+            `audio_path_wo_extension` (Path): The same path as `audio_temp_path` but without the file extension.
+            `video_size_b` (int): The size of the video file in bytes.
+            `audio_codec` (str): The codec of the __first found__ audio in the video.
+            `image_path` (Path): The path of the temporary extracted (cover-)image file.
+            `audio_codec_instance` (Codec): The Codec object instance, used to get the correct FFMPEG command.
         """
         self.video_path: Path = path
         self.queue_number: int = queue_number
@@ -75,13 +75,11 @@ class File(Codec):
 
     def _check_duplicate_hash(self) -> bool:
         """
-        TL;DR: Rises an exception if a duplicate file exists in any given target.
-
         Check if the video has a duplicate by matching the
-        generated checksum (an md5 hash) with already initialized instances.
+        generated checksum with already initialized instance checksums.
 
         This also accounts for duplicates in other given targest as well,
-        meaning; if a duplicate is found in another directory, the exception is risen.
+        meaning; __if a duplicate is found in another directory, the exception is risen.__
         """
         self._logger.debug(' Checking for a duplicate hash...')
 
@@ -93,8 +91,10 @@ class File(Codec):
 
     def _set_video_md5_checksum(self) -> None:
         """
-        Generates an md5 hash for the video this instance is initialized for
+        Generates an md5 hash for the video file this instance is initialized for
         and sets the `video_md5_checksum` and `video_md5_checksum_short` properties.
+
+        NOTE: Also checks for duplicate hashes before setting the property.
         """
         self._logger.debug(' Creating md5 hash...')
 
@@ -119,7 +119,7 @@ class File(Codec):
 
     def _set_audio_codec_and_video_size_b(self) -> None:
         """
-        Gets the audio codec from the video and sets it to the
+        Gets the audio codec from the video file and sets it to the
         `video_md5_checksum` and `video_md5_checksum_short` properties.
         """
         self._logger.debug(' Getting audio codec and file size...')
@@ -154,6 +154,10 @@ class File(Codec):
 
 
     def _set_temp_audio_path(self) -> None:
+        """
+        Creates the path for the temporary extracted audio file
+        and sets it to the `audio_temp_path` property.
+        """
         self._logger.debug(' Setting temp audio path...')
 
         name: str = '.__' + self.video_md5_checksum_short + '_' + self.video_path.stem + '.' + self.audio_codec
@@ -161,6 +165,10 @@ class File(Codec):
 
 
     def _set_audio_path_wo_extension(self) -> None:
+        """
+        Takes the `audio_temp_path` path, removes the extension and sets
+        it to the `audio_path_wo_extension` property.
+        """
         self._logger.debug(' Setting final output path...')
 
         name: str = self.video_path.stem
@@ -168,12 +176,21 @@ class File(Codec):
 
 
     def _set_image_path(self) -> None:
+        """
+        Creates the path for the temporary extracted image file
+        and sets it to the `image_path` property.
+        """
         self._logger.debug(' Setting image path...')
 
         self.image_path: Path = self.video_path.parent / f'.__{self.video_md5_checksum_short}_{c.COVER_ART_NAME}'
 
 
     def _fix_codec_instance_output_path(self) -> None:
+        """
+        Renames the final output in the Codec instance
+        (__by appending the short checksum in front of the extension__)
+        before the file is created, avoiding the collision.
+        """
         self._logger.debug(' Fixing final name by appending short checksum for uniqueness...')
 
         path = Path(self.audio_codec_instance.output_path)
@@ -182,6 +199,10 @@ class File(Codec):
 
 
     def _check_duplicate_final_name(self) -> bool:
+        """
+        Check if there is a `Codec` instance `final_output`
+        with the same name and extension as this `Codec` instance.
+        """
         self._logger.debug(' Checking for a duplicate final output name...')
 
         while(self.audio_codec_instance.output_path in self.final_output_paths):
@@ -190,6 +211,13 @@ class File(Codec):
 
 
     def _set_audio_codec_instance(self) -> None:
+        """
+        Uses the inherited `Codec` class to set the correct audio
+        codec instance to the `audio_codec_instance` property.
+
+        NOTE: Also checks for duplicate final output names
+        before setting the property.
+        """
         codec = Codec(
             codec=self.audio_codec,
             audio_temp_path=self.audio_temp_path,
@@ -205,6 +233,10 @@ class File(Codec):
 
 
     def _remove_image(self) -> None:
+        """
+        Removes the temporary generated image file,
+        doing some checks before doing so.
+        """
         self._logger.debug(' Removing image...')
 
         if self.image_path.exists():
@@ -220,6 +252,10 @@ class File(Codec):
 
 
     def _remove_temp_audio(self) -> None:
+        """
+        Removes the temporary generated audio file,
+        doing some checks before doing so.
+        """
         self._logger.debug(' Removing temp audio...')
 
         if self.audio_temp_path.exists():
@@ -235,6 +271,13 @@ class File(Codec):
 
 
     def extract_temp_audio(self) -> None:
+        """
+        Extracts a temporary audio file that will be duplicated
+        __and then removed__ once the cover image is applied.
+
+        __FFMPEG can't overwrite the file by itself,
+        so a temporary file is required.__
+        """
         self._logger.debug(' Extracting audio...')
 
         command: [str] = [
@@ -258,6 +301,12 @@ class File(Codec):
 
 
     def create_temp_cover_image(self) -> None:
+        """
+        Extracts a temporary image file from the video.
+
+        NOTE:
+            Timestamp is specified by the `THUMBNAIL_CAPTURE_TIMESTAMP` constant.
+        """
         self._logger.debug(f' Extracting image from timestamp: {c.THUMBNAIL_CAPTURE_TIMESTAMP}...')
 
         command: [str] = [
@@ -284,6 +333,11 @@ class File(Codec):
 
 
     def apply_cover_image(self) -> None:
+        """
+        Applies the temporary image file to the temporary
+        audio file __creating a duplicate audio file with
+        the image applied as a cover.__
+        """
         self._logger.debug(' Applying image to audio file...')
 
         try:
