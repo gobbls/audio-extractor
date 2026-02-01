@@ -7,6 +7,8 @@
 # 5. Add arg options to:
 #    a. Recurse directories                                                          [ -r | --recurse ]
 #    b. Specify output directory                                                     [ -o | --output [INPUT] ]
+#       - should need an extra flag to specify either a nested directory
+#         per target, or a collective directory for all outputs.                     [ --collect | --nest ]
 #    c. Ability to delete the video files on completion                              [ -D | --delete ]
 #    d. Keep all temp-files created during processing                                [ -k | --keep-all ]
 #    e. Specify a directory for the temp files during processing                     [ -t | --temp-at [INPUT] ]
@@ -18,6 +20,7 @@
 import os
 import logging
 import subprocess
+import argparse
 from sys import argv
 from pathlib import Path
 
@@ -25,7 +28,16 @@ from file import File
 import constants as c
 
 
-# Configure logger
+# Configure argparse.
+parser = argparse.ArgumentParser(
+        description='Takes video files from target directories, extracts their audio and applies a cover image to the audio file.')
+parser.add_argument(
+        '--debug',
+        help='The directories containing the target video files.')
+args = parser.parse_args()
+
+
+# Configure logging.
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 separator = '~' * os.get_terminal_size().columns
