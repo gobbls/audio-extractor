@@ -30,16 +30,20 @@ import constants as c
 
 # Configure argparse.
 parser = argparse.ArgumentParser(
-        description='Takes video files from target directories, extracts their audio and applies a cover image to the audio file.')
+        description='Takes video files from target directories, ' +
+        'extracts their audio and applies a cover image to the audio file.')
+
 parser.add_argument(
         '--debug',
-        help='The directories containing the target video files.')
+        action="store_true",
+        help='Show detailed debugging output.')
+
 args = parser.parse_args()
 
 
 # Configure logging.
 logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG if args.debug else logging.INFO)
 separator = '~' * os.get_terminal_size().columns
 
 
@@ -126,8 +130,8 @@ def main():
 
 
 if __name__ == '__main__':
-    check_dependencies()
-    check_targets()
-    main()
+    #check_dependencies()
+    #check_targets()
+    #main()
 
     print("\nDone!")
