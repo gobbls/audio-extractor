@@ -98,7 +98,7 @@ def get_videos_from_path(path: str) -> [Path]:
     a list of supported formats.
 
     Returns:
-        `[str]`: An array of file paths.
+        `[Path]`: An array of file paths.
     """
     return [item for item in Path(path).iterdir() if item.is_file() and item.suffix in c.VIDEO_FORMATS]
 
